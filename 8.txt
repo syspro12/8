@@ -1,0 +1,498 @@
+1)****************************************************************************
+
+
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#define newnode (struct node*)malloc(sizeof(struct node))
+
+struct node
+{
+    char s[80];                                                                         
+    struct node *next,*prev;
+}*head=NULL;
+
+char fname[40];                                                                     
+int cnt=0;
+
+void append(char st[80])                                                        
+{
+    struct node *p=NULL,*new=NULL;
+    if(head==NULL)
+    {
+        head=newnode;
+        strcpy(head->s,st);
+        head->next=head->prev=NULL;                                      
+    }
+    else
+    {
+        for(p=head ; p->next ; p=p->next);                                
+        p->next=newnode;
+        p->next->prev=p;
+        p=p->next;
+        strcpy(p->s,st);
+        p->next=NULL;
+    }
+    ++cnt;                                                                               
+}
+
+void delete(int pos1)                                                             
+    int i;
+    struct node *d=NULL,*p=NULL;
+    //printf("befor CCCOOOUUNT ==> %d",cnt);
+    if(pos1>cnt || pos1<0)
+        printf("\n\n Error in d pos1=%d : enter correct order\n",pos1);
+    else
+    {
+         if(pos1==1)                                                                  
+         {
+           d=head;
+           head=head->next;
+         }
+         else
+         {
+         for(i=1,p=head; i<pos1-1 && p!=NULL; i++,p=p->next);       
+         if(pos1!=cnt)
+         {
+            d=p->next;                                                                
+            p->next=d->next;                                                     
+            if(d->next!=NULL)
+            d->next->prev=p;
+            p->next=d->next;
+         }
+         else
+         {
+            d=p->next;                                                                
+            p->next=NULL;
+         }
+        }
+         free(d);
+         --cnt;                                                                            
+         printf("\nNode Deleted Successfully\n");
+        
+    }
+}
+
+void printline()
+{
+	struct node *p;
+	 for(p=head;p;p=p->next)
+         printf("%s\n",p->s); 
+}
+
+void save()                                                                                        
+{
+    FILE *fp;
+    struct node *temp;
+    fp=fopen(fname,"w");
+    if(fp==NULL)
+    {
+        printf("\n error in file opening");
+        return;
+    }
+    else
+    {
+        temp=head;
+        while(temp!=NULL)                                                                     
+        {
+            fputs(temp->s,fp);
+            fputs("\n",fp);
+            temp=temp->next;
+        }
+    }
+    fclose(fp);
+}
+void load()                                                                                         
+{
+	FILE *fp;
+	char buff[80];
+	fp=fopen(fname,"r");
+	if(fp==NULL)
+	{
+		printf("\nFile %s not found\n",fname);
+		exit(0);
+	}
+	while(fgets(buff,80,fp)!=NULL)                                                      
+	    append(buff);
+	fclose(fp);
+}
+
+
+int main(int argc,char *argv[0])
+{
+    char cmd[10],str[80],c;
+    FILE *fp;
+    if(argc>1)
+    {
+        strcpy(fname,argv[1]);
+        fp=fopen(fname,"r");
+        if(fp==NULL)
+        {
+            fp=fopen(fname,"w+");
+            fclose(fp);                                                                     
+            printf("\nFile %s is created.\n",fname);
+        }
+        else
+            load();                                                                                
+    else
+    {
+        printf("Enter file name : ");                                              
+        scanf("%s",fname);
+        fp=fopen(fname,"r");
+        if(fp==NULL)
+        {
+            fp=fopen(fname,"w+");
+            fclose(fp);
+            printf("\nFile %s is created.\n",fname);
+        }
+        else
+            load();
+    }
+    do
+    {
+        int f=0,e=0,t=0;
+        char p[80];
+        printf("\n$ : ");
+        fflush(stdin);
+        gets(cmd);
+        sscanf(cmd," %c %d %d %d",&c,&f,&e,&t);                        
+        if(c=='f')
+            sscanf(cmd," %c %c",&c,p);                                            
+        switch(c)
+        {
+            case 'A' :
+            case 'a' :   printf("\t\tEnter the string . . .\n");
+                            fflush(stdin);
+                            gets(str);
+                            while(strcmp(str,"exit"))
+                            {
+                                 append(str);                                              
+                                 fflush(stdin);
+                                 gets(str);
+                            }break;
+
+            case 'P' :
+            case 'p' :   printline();                                     
+                         break;
+            case 'D' :
+            case 'd' :   if(e==0) 
+                                printf("\ninvalid command!");                                                      
+                            else if(e>f && e<=cnt)
+                            {
+                                int i;
+                                for(i=f;i<=e;e--)
+                                    delete(i);                                                  
+                            }
+                            else    printf("Invalid boundry entered...please use 'h' for help\n");
+                            break;
+            case 'S' :
+            case 's' :   save(); break;                                                     
+            
+            case 'H' :
+            case 'h' :   printf("\na       : To Append.\np       : To Display entire link list.\ns       : Save\nd m n:		delete range\nh       : Help\ne       : To Exit.\n");
+                        break;                                                                     
+
+            case 'E' :
+            case 'e' :   exit(0);                                                               
+
+            default  :   printf("\nInvalid command..please use 'h' for help\n");
+        }
+    }while(c!='e');  
+    return 0;
+}
+
+
+
+2)****************************************************************************
+
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#define MAX_PROCESSES 50
+
+
+int Allocation[100][10],Max[100][10],Need[100][10],Available[10],Total[10]={0,0,0};
+int no_of_resources,no_of_processes;
+static int finish[MAX_PROCESSES];
+
+int finishAll()
+{
+	int i;
+	for(i=0 ; i<no_of_processes ; i++)
+		if(finish[i]==0) 
+			return 0;
+	return 1; 
+}
+
+int safe()
+{
+	int i,j,flag=1;
+	int tAllocation[100][10],tNeed[100][10],tAval[10];
+	
+	
+	for(i=0 ; i< no_of_resources ; i++)
+		tAval[i]=Available[i];
+		
+	for(i=0 ; i< no_of_processes ; i++)
+	{
+		finish[i]=0; // all finish flags made false
+		
+		
+		for(j=0; j<no_of_resources; j++)
+		{
+			tAllocation[i][j]=Allocation[i][j];
+			tNeed[i][j]=Need[i][j];
+		}
+	}
+	
+	printf("\n\nSafe Sequence : ");
+	
+	
+	while(!finishAll())
+	{
+		flag=1;
+		for(i=0;i<no_of_processes;i++)
+		{
+			if(finish[i]==1)
+				continue;
+			
+			
+			
+			for(j=0;j<no_of_resources;j++)
+				if(tNeed[i][j]>tAval[j])
+				break;
+			
+				
+			if(j==no_of_resources)// all needs are in availability range
+			{
+				finish[i]=1;   
+				
+				printf(" P%d",i); 
+				
+				
+				flag=0; 
+				
+				
+				for(j=0;j<no_of_resources;j++)
+				{
+					tAval[j]-=tNeed[i][j];
+					tAllocation[i][j]+=tNeed[i][j];
+					tNeed[i][j]=0;
+				}
+				
+				
+				for(j=0;j<no_of_resources;j++)
+                                {
+                                        tAval[j]+=tAllocation[i][j];
+                                        tAllocation[i][j]=0;
+                                }
+
+			}
+		}
+		if(flag==1)return 0;
+	}
+  	return 1;
+}
+
+
+
+void request()
+{
+	int i,j,p,Req[10];
+	
+	printf("\n\nRequest from which Process ? ");
+	scanf("%d",&i);
+	
+	if(i>no_of_processes || i<0)
+	{
+		printf("\nError : Invalid Process ID, Process %d does not exist.",i);
+		return;
+	}
+	
+	printf("\nEnter Request : ");
+	for(j=0;j<no_of_resources;j++)
+		scanf("%d",&Req[j]);
+		
+	for(j=0;j<no_of_resources;j++)
+		if(Req[j]>Need[i][j])
+			break;
+
+	if(j<no_of_resources) printf("\nError : Invalid Request");
+	
+	
+	else
+	{
+		printf("\nRequest is Valid");
+		for(j=0;j<no_of_resources;j++)
+			if(Req[j] > Available[j])
+				break;
+		
+		
+		if(j<no_of_resources)
+		printf("\nWAIT : Not enough resources available with system.");
+		
+		
+		else
+		{
+			printf("\nRequired resources are Available.");
+			for(j=0;j<no_of_resources;j++)
+			{
+				Available[j]-=Req[j];
+				Allocation[i][j]+=Req[j];
+				Need[i][j]-=Req[j];
+			}
+			if(safe())
+			printf("\nSystem will remain in safe state.\nRequest granted.");
+			
+			else
+			{
+				printf("\nSystem does not remain in safe state.");
+				printf("\nRequest NOT granted.");
+				
+				
+				for(j=0;j<no_of_resources;j++)
+				{
+					Available[j]+=Req[j];
+        	                        Allocation[i][j]-=Req[j];
+	                                Need[i][j]+=Req[j];
+
+				}
+			}
+		}
+	}
+
+	
+}
+
+FindNeed()
+{
+	int i,j,resourceCount;
+	char resource='A';
+
+	printf("\nNeed Table\n------------------------");
+	printf("\nProcess");
+	for(resourceCount=1; resourceCount<= no_of_resources; resourceCount++)
+	printf("\t%c ",resource++);
+	
+	for(i=0;i<no_of_processes;i++)
+	{
+		printf("\n\nP%d :   \t",i);
+		for(j=0;j<no_of_resources;j++)
+		{
+			Need[i][j]=Max[i][j]-Allocation[i][j];
+			printf("%d\t",Need[i][j]);
+		}
+	}
+}
+
+AcceptAllocationTable()
+{
+	int i,j,resourceCount;
+	char resource='A';
+	
+	printf("\nEnter instances of Resources Allocated to each process : ");
+	printf("\n\nAllocation\n-------------");
+	printf("\nProcess");
+	for(resourceCount=1; resourceCount<= no_of_resources; resourceCount++)
+	printf("\t%c ",resource++);
+	
+	for(i=0;i<no_of_processes;i++)
+	{
+		printf("\nP%d :   \t",i);
+		for(j=0;j<no_of_resources;j++)
+		{
+			scanf("%d",&Allocation[i][j]);
+			Total[j]+=Allocation[i][j];
+		}
+	}
+}
+
+AcceptMaxTable()
+{
+	int i,j,resourceCount;
+	char resource='A';
+
+	printf("\n\nEnter Max Resource Requirements for each process : ");
+        printf("\n\nMAX\n-------------");
+        printf("\nProcess");
+	for(resourceCount=1; resourceCount<= no_of_resources; resourceCount++)
+	printf("\t%c ",resource++);
+        
+        for(i=0;i<no_of_processes;i++)
+        {
+                printf("\nP%d :   \t",i);
+                for(j=0;j<no_of_resources;j++)
+                {
+                        scanf("%d",&Max[i][j]);
+                       
+                }
+        }
+
+}
+
+main()
+{
+	int i,j,choice=1,resourceCount;
+	char resource='A';
+
+	
+	printf("\nHow many types of resources ? ");
+	scanf("%d",&no_of_resources);
+	
+	printf("\nHow many Processes ? ");
+	scanf("%d",&no_of_processes);
+		
+	AcceptAllocationTable();
+	
+	printf("\nEnter Available resources with system : ");
+	
+		printf("\n\nAVAILABLE\n-------------");
+        	printf("\nResType");
+		for(resourceCount=1; resourceCount<= no_of_resources; resourceCount++)
+		printf("\t%c ",resource++);
+		printf("\n\t  ");
+	
+	for(j=0;j<no_of_resources;j++)
+	{
+		scanf("%d",&Available[j]);
+		Total[j]+=Available[j];
+	}
+	
+	resource='A'; 
+	
+	printf("\nTotal system Resources are : ");
+	printf("\n\nTOTAL\n-------------\n");
+        	printf("\nTotal  ");
+		for(resourceCount=1; resourceCount<= no_of_resources; resourceCount++)
+		printf("\t%c ",resource++);
+		printf("\n");
+	for(j=0;j<no_of_resources;j++)
+		printf("\t%d",Total[j]);
+		
+	AcceptMaxTable();
+	
+	FindNeed();
+	
+	if(safe())
+	{
+		printf("\n\nStatus : System is in Safe state");
+		do
+		{
+			request();
+			printf("\n\nAny more request ? (yes=1/no=0): ");
+			scanf("%d",&choice);
+		}while(choice == 1);
+	}
+	
+	else
+	
+		printf("\nStatus : System is NOT in safe state");
+		
+}
+
+
+
+
+
